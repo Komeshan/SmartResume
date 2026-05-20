@@ -37,6 +37,13 @@ const Dashboard = () => {
     e.preventDefault()
   }  
 
+  const deleteResume = async (resumeId) => {
+    const confirm = window.confirm('Are you sure you want to delete this resume?')
+    if(confirm) {
+      setAllResumes(prev => prev.filter(resume => resume._id !== resumeId))
+    }
+  } 
+
   useEffect(() => {
     loadAllResumes()
   },[])
@@ -45,16 +52,16 @@ const Dashboard = () => {
     <div >
         <div className='max-w-7xl mx-auto px-4 py-8'>
 
-          <p className='text-2xl font-medium mb-6 bg-gradient-to-r from-slate-600 to-slate-700 bg-clip-text text-transparent sm:hidden'>Welcome, Joe Doe</p>
+          <p className='text-2xl font-medium mb-6 bg-linear-to-r from-slate-600 to-slate-700 bg-clip-text text-transparent sm:hidden'>Welcome, Joe Doe</p>
 
           <div className='flex gap-4 '>
             <button onClick={() => setShowCreateResume(true)} className='w-full bg-white sm:max-w-36 h-48 flex flex-col items-center justify-center rounded-lg gap-2 text-slate-600 border border-slate-300 group hover:border-indigo-500 hover:shadow-lg transition-all duration-300 cursor-pointer'>
-              <PlusIcon className='size-11 transition-all duration-300 p-2.5 bg-gradient-to-br from-blue-300 to-blue-700 text-white rounded-full'/>
+              <PlusIcon className='size-11 transition-all duration-300 p-2.5 bg-linear-to-br from-blue-300 to-blue-700 text-white rounded-full'/>
               <p className='text-sm group-hover:text-blue-600 transition-all duration-300'>Create Resume</p>
             </button>
 
             <button onClick={() => setShowUploadResume(true)} className='w-full bg-white sm:max-w-36 h-48 flex flex-col items-center justify-center rounded-lg gap-2 text-slate-600 border  border-slate-300 group hover:border-indigo-500 hover:shadow-lg transition-all duration-300 cursor-pointer'>
-              <UploadCloud className='size-11 transition-all duration-300 p-2.5 bg-gradient-to-br from-blue-300 to-blue-700 text-white rounded-full'/>
+              <UploadCloud className='size-11 transition-all duration-300 p-2.5 bg-linear-to-br from-blue-300 to-blue-700 text-white rounded-full'/>
               <p className='text-sm group-hover:text-blue-600 transition-all duration-300'>Upload existing</p>
             </button>
           </div>
@@ -72,7 +79,7 @@ const Dashboard = () => {
                     Updated on {new Date(resume.updatedAt).toLocaleDateString()} 
                   </p>
                   <div onClick={e => e.stopPropagation()} className='absolute top-1 right-1 group-hover:flex items-center hidden'>
-                    <TrashIcon className='size-7 p-1.5 hover:bg-white/50 rounded text-slate-700 transition-colors'/>
+                    <TrashIcon onClick={() => deleteResume(resume._id)} className='size-7 p-1.5 hover:bg-white/50 rounded text-slate-700 transition-colors'/>
                     <PencilIcon onClick={() => {setEditResumeId(resume._id); setTitle(resume.title)}} className='size-7 p-1.5 hover:bg-white/50 rounded text-slate-700 transition-colors'/>
                   </div>
                 </button>
@@ -84,7 +91,7 @@ const Dashboard = () => {
             <form onSubmit={createResume} onClick={() => setShowCreateResume(false)} className='fixed inset-0 bg-black/70 backdrop-blur bg-opacity-50 z-10 flex items-center justify-center'>
               <div onClick={e => e.stopPropagation()} className='relative bg-slate-50 border shadow-md rounded-lg w-full max-w-sm p-6'>
                 <h2 className='text-xl font-bold mb-4'>Create a resume</h2>
-                <input onChange={() => setTitle(e.target.value)} value={title} type="text" placeholder='Enter resume title' className='w-full px-4 py-2 mb-4 focus:border-blue-600 ring-blue-600' required/>
+                <input onChange={(e) => setTitle(e.target.value)} value={title} type="text" placeholder='Enter resume title' className='w-full px-4 py-2 mb-4 focus:border-blue-600 ring-blue-600' required/>
                 <button className='w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors'>Create Resume</button>
                 <XIcon className='absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors' onClick={() => {setShowCreateResume(false); setTitle('')}}/>
               </div>
