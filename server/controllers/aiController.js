@@ -1,11 +1,12 @@
-
+import Resume from "../models/Resume.js"
+import aiRouter from "../routes/aiRoutes.js"
 
 //controller for professional summary enhancement using AI
 //POST: /api/ai/enhance-professional-summary
 export const enhanceProfessionalSummary = async (req, res) => {
     try {
         const { userContent } = req.body
-
+ 
         if (!userContent) {
             return res.status(400).json({ message: 'User content is required' })
         }
