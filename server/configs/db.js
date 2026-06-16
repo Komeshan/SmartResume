@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const connectDB = async () => {
     try {
-        mongoose.conection.on("connected", () => {console.log("MongoDB connected")})
+        mongoose.connection.on("connected", () => {console.log("MongoDB connected")})
 
         let mongodbURI = process.env.MONGODB_URI
         const projectName = "SMART_RESUME"
