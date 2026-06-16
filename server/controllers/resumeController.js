@@ -63,7 +63,7 @@ export const getResumeById = async (req, res) => {
 
 // get resume id public
 // GET: /api/resumes/public
-const getPublicResumeById = async (req, res) => {
+export const getPublicResumeById = async (req, res) => {
     try {
         const {resumeId} = req.params
         const resume = await Resume.findOne({public: true, _id: resumeId})
