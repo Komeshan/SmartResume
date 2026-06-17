@@ -60,7 +60,7 @@ export const loginUser = async (req, res) => {
         }
 
         //check if password is correct
-        if (!user.comparePassword(password)) {
+        if (!await user.comparePassword(password)) {
             return res.status(400).json({ message: "Invalid email or password" })
         }
 
@@ -70,7 +70,7 @@ export const loginUser = async (req, res) => {
         res.status(200).json({ 
             message: "User logged in successfully", 
             token, 
-            newUser
+            user
         })
 
     } catch (error) {
