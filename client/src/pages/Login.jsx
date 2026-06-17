@@ -26,7 +26,7 @@ const Login = () => {
             localStorage.setItem('token', data.token)
             toast.success()
         } catch (error) {
-            toast(error?.response?.data?.message || error.message)
+            toast.error(error?.response?.data?.message || error.message)
         }
     }
 

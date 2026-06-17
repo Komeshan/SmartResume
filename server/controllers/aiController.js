@@ -1,5 +1,7 @@
 import Resume from "../models/Resume.js"
 import aiRouter from "../routes/aiRoutes.js"
+import ai from "../configs/ai.js"
+
 
 //controller for professional summary enhancement using AI
 //POST: /api/ai/enhance-professional-summary
@@ -86,42 +88,42 @@ export const uploadResume = async (req, res) => {
         Provide data in the following JSON format with no additional text before or after:
         
         {
-            professional_summary: {type: String, default: ''},
-            skills: [{type: String}],
-            personal_info: {
-                image: {type: String, default: ''},
-                full_name: {type: String, default: ''},
-                profession: {type: String, default: ''},
-                email: {type: String, default: ''},
-                phone: {type: String, default: ''},
-                location: {type: String, default: ''},
-                linkedin: {type: String, default: ''},
-                website: {type: String, default: ''},
+            "professional_summary": "string - extracted professional summary",
+            "skills": ["string - skill 1", "string - skill 2"],
+            "personal_info": {
+                "image": "",
+                "full_name": "string - extracted full name",
+                "profession": "string - extracted profession",
+                "email": "string - extracted email",
+                "phone": "string - extracted phone",
+                "location": "string - extracted location",
+                "linkedin": "string - extracted linkedin url",
+                "website": "string - extracted portfolio/website url"
             }, 
-            experience: [
+            "experience": [
                 {
-                    company: {type: String},
-                    position: {type: String},
-                    start_date: {type: String},
-                    end_date: {type: String},
-                    description: {type: String},
-                    is_current: {type: Boolean},
+                    "company": "string - company name",
+                    "position": "string - job position",
+                    "start_date": "string - start date",
+                    "end_date": "string - end date or 'Present'",
+                    "description": "string - description of responsibilities",
+                    "is_current": false
                 }
             ],
-            project: [
+            "project": [
                 {
-                    name: {type: String},
-                    type: {type: String},
-                    description: {type: String},
+                    "name": "string - project name",
+                    "type": "string - project type/technologies used",
+                    "description": "string - project description"
                 }
             ],
-            education: [
+            "education": [
                 {
-                    institution: {type: String},
-                    degree: {type: String},
-                    field: {type: String},
-                    graduation_date: {type: String},
-                    gpa: {type: String},
+                    "institution": "string - school or university name",
+                    "degree": "string - degree/qualification",
+                    "field": "string - field of study",
+                    "graduation_date": "string - graduation date",
+                    "gpa": "string - GPA or empty string"
                 }
             ]
         }`
