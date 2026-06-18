@@ -7,55 +7,95 @@ const PersonalInfoForm = ({data, onChange, removeBackground, setRemoveBackground
         onChange({ ...data, [field]: value })
     }
 
+    const handleImageError = (e) => {
+        const src = e.target.src;
+        if (src.includes(',e-bgremove')) {
+            e.target.src = src.replace(',e-bgremove', '');
+        } else if (src.includes('e-bgremove,')) {
+            e.target.src = src.replace('e-bgremove,', '');
+        } else if (src.includes('?tr=e-bgremove')) {
+            e.target.src = src.replace('?tr=e-bgremove', '');
+        } else if (src.includes('&tr=e-bgremove')) {
+            e.target.src = src.replace('&tr=e-bgremove', '');
+        } else if (src.includes('tr=e-bgremove')) {
+            e.target.src = src.replace('tr=e-bgremove', '');
+        }
+    }
+
     const fields = [
         {key: 'full_name', label: 'Full Name', icon: User, type: 'text', required: true},
         {key: 'email', label: 'Email Address', icon: Mail, type: 'email', required: true},
         {key: 'phone', label: 'Phone Number', icon: Phone, type: 'tel', required: true},
         {key: 'location', label: 'Location', icon: MapPin, type: 'text', required: true},
         {key: 'profession', label: 'Profession', icon: BriefcaseBusiness, type: 'text', required: true},
-        {key: 'linkedin', label: 'LinkedIn Profile', icon: Handshake, type: 'url', required: false},
-        {key: 'website', label: 'Personal Website', icon: Globe, type: 'url', required: false},
+        {key: 'linkedin', label: 'LinkedIn', icon: Handshake, type: 'url', required: false},
+        {key: 'website', label: 'Website', icon: Globe, type: 'url', required: false},
     ]
 
   return (
-    <div>
-        <h3 className='text-lg font-semibold text-gray-900'>Personal Information</h3>
-        <p className='text-sm text-gray-600'>Get started with the personal information</p>
-        <div className='flex items-center gap-2'>
-            <label>
-                {data.image ? (
-                    <img src={typeof data.image === 'string' ? data.image : URL.createObjectURL(data.image)} alt="" className='w-16 h-16 rounded-full object-cover mt-5 ring ring-slate-300 hover:opacity-80'/>
+    <div className="space-y-6">
+        <div>
+            <h3 className='text-sm font-bold text-slate-800 tracking-tight'>Personal Information</h3>
+            <p className='text-xs text-slate-500 mt-0.5'>Provide your key contact info for the resume header.</p>
+        </div>
+
+        <div className='flex items-center gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-200/60'>
+            <label className="cursor-pointer">
+                {data.image && data.image !== 'undefined' && data.image !== 'null' ? (
+                    <div className="relative group">
+                        <img 
+                            src={typeof data.image === 'string' ? data.image : URL.createObjectURL(data.image)} 
+                            alt="" 
+                            onError={handleImageError}
+                            className='w-16 h-16 rounded-2xl object-cover ring-2 ring-indigo-500/10 hover:opacity-80 transition-all'
+                        />
+                        <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-[10px] text-white font-bold">Edit</span>
+                        </div>
+                    </div>
                 ) : (
-                    <div className='inline-flex items-center gap-2 mt-5 text-sm text-slate-500 cursor-pointer hover:text-slate-700'>
-                        <User className='size-10 p-2.5 border rounded-full' />
-                        Upload user image
+                    <div className='flex flex-col items-center justify-center size-16 border border-dashed border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/30 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all'>
+                        <User className='size-6 stroke-1.5' />
+                        <span className="text-[8px] font-bold mt-1">Upload</span>
                     </div>
                 )}
                 <input type="file" accept='image/jpeg, image/png' className='hidden' onChange={(e) => handleChange('image', e.target.files[0])}/>
             </label>
-            {typeof data.image === 'object' && (
-                <div className='flex flex-col gap-1 pl-4 text-sm'>
-                    <p>Remove background</p>
-                    <label className='relative inline-flex items-center cursor-pointer text-gray-900 gap-3'>
+            {data.image && data.image !== 'undefined' && data.image !== 'null' && (
+                <div className='flex flex-col gap-1 pl-2 text-xs'>
+                    <span className="font-semibold text-slate-700">Remove background</span>
+                    <label className='relative inline-flex items-center cursor-pointer text-slate-900 gap-3 mt-1'>
                         <input type="checkbox" className='sr-only peer' onChange={() => setRemoveBackground(prev => !prev)} checked={removeBackground}/>
-                        <div className='w-9 h-5 bg-slate-300 rounded-full peer peer-checked:bg-blue-600 transition-colors duration-200'></div>
-                        <span className='dot absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-4'></span>
+                        <div className='w-8 h-4.5 bg-slate-200 rounded-full peer peer-checked:bg-indigo-600 transition-colors duration-200'></div>
+                        <span className='dot absolute left-0.5 top-0.5 w-3.5 h-3.5 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked:translate-x-3.5 shadow-xs'></span>
                     </label>
+                    <p className='text-[8.5px] text-slate-400 mt-1 leading-normal max-w-[200px]'>
+                        Note: Requires the Background Removal extension to be active in your ImageKit dashboard.
+                    </p>
                 </div>
             )}
         </div>
 
-        {fields.map((field) => {
-            const Icon = field.icon
-            return (
-                <div key={field.key} className='space-y-1 mt-5'>
-                    <label className='flex items-center gap-2 text-sm font-medium text-gray-600'>
-                        <Icon className='size-4'/>{field.label} {field.required && <span className='text-red-500'>*</span>}
-                    </label>
-                    <input type={field.type} value={data[field.key] || ''} onChange={(e) => handleChange(field.key, e.target.value)} className='w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring focus:border-blue-500 focus:ring-blue-500 outline-none transition-colors text-sm' placeholder={`Enter your ${field.label.toLowerCase()}`} required={field.required}/>
-                </div>
-            )
-        })}
+        <div className="space-y-4">
+            {fields.map((field) => {
+                const Icon = field.icon
+                return (
+                    <div key={field.key} className='space-y-1'>
+                        <label className='flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wider pl-1'>
+                            <Icon className='size-3.5 text-slate-400'/>{field.label} {field.required && <span className='text-red-500'>*</span>}
+                        </label>
+                        <input 
+                            type={field.type} 
+                            value={data[field.key] || ''} 
+                            onChange={(e) => handleChange(field.key, e.target.value)} 
+                            className='w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-slate-700 placeholder-slate-400 text-sm transition-all duration-200 h-10' 
+                            placeholder={`Enter your ${field.label.toLowerCase()}`} 
+                            required={field.required}
+                        />
+                    </div>
+                )
+            })}
+        </div>
 
     </div>
   )

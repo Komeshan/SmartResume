@@ -11,8 +11,8 @@ const authSlice = createSlice({
     },
     reducers: {
         login: (state, action) => {
-            state.token = action.payload.token
-            state.user = action.payload.user
+            state.token = action.payload.token || state.token
+            state.user = action.payload.user || state.user
         },
         logout: (state) => {
             state.token = '',
@@ -21,10 +21,15 @@ const authSlice = createSlice({
         },
         setLoading: (state, action) => {
             state.loading = action.payload  
+        },
+        updateLimits: (state, action) => {
+            if (state.user) {
+                state.user.aiUsage = action.payload
+            }
         }
     }
 })
 
-export const {login, logout, setLoading} = authSlice.actions
+export const {login, logout, setLoading, updateLimits} = authSlice.actions
 
 export default authSlice.reducer

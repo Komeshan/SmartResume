@@ -64,6 +64,19 @@ export const loginUser = async (req, res) => {
             return res.status(400).json({ message: "Invalid email or password" })
         }
 
+        // Ensure aiUsage limits exist
+        if (!user.aiUsage) {
+            user.aiUsage = {
+                summaryCount: 0,
+                summaryLastReset: new Date(),
+                parserCount: 0,
+                parserLastReset: new Date(),
+                imageCount: 0,
+                imageLastReset: new Date()
+            }
+            await user.save()
+        }
+
         // return success response with token
         const token = generateToken(user._id)
         user.password = undefined // hide password in response
@@ -90,6 +103,19 @@ export const getUserById = async (req, res) => {
         const user = await User.findById(req.userId)
         if (!user) {
             return res.status(404).json({ message: "User not found" })
+        }
+
+        // Ensure aiUsage limits exist
+        if (!user.aiUsage) {
+            user.aiUsage = {
+                summaryCount: 0,
+                summaryLastReset: new Date(),
+                parserCount: 0,
+                parserLastReset: new Date(),
+                imageCount: 0,
+                imageLastReset: new Date()
+            }
+            await user.save()
         }
 
         //return user

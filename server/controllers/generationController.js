@@ -1,10 +1,9 @@
 import Resume from "../models/Resume.js"
-import aiRouter from "../routes/aiRoutes.js"
 import ai from "../configs/ai.js"
+import { incrementQuota } from "../middlewares/quotaMiddleware.js"
 
-
-//controller for professional summary enhancement using AI
-//POST: /api/ai/enhance-professional-summary
+// Controller for professional summary enhancement using AI
+// POST: /api/generation/enhance-professional-summary
 export const enhanceProfessionalSummary = async (req, res) => {
     try {
         const { userContent } = req.body
@@ -27,17 +26,19 @@ export const enhanceProfessionalSummary = async (req, res) => {
         })
 
         const enhancedContent = response.choices[0].message.content
+        
+        // Success: Increment the summary count for the user
+        const updatedLimits = await incrementQuota(req.userId, 'summary')
 
-        return res.status(200).json({ enhancedContent })
+        return res.status(200).json({ enhancedContent, limits: updatedLimits })
 
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }
 }
 
-
-//controller for job description enhancement using AI
-//POST: /api/ai/enhance-job-description
+// Controller for job description enhancement using AI
+// POST: /api/generation/enhance-job-description
 export const enhanceJobDescription = async (req, res) => {
     try {
         const { userContent } = req.body
@@ -61,19 +62,20 @@ export const enhanceJobDescription = async (req, res) => {
 
         const enhancedContent = response.choices[0].message.content
 
-        return res.status(200).json({ enhancedContent })
+        // Success: Increment the summary count for the user (since it is a daily action)
+        const updatedLimits = await incrementQuota(req.userId, 'summary')
+
+        return res.status(200).json({ enhancedContent, limits: updatedLimits })
 
     } catch (error) {
         return res.status(400).json({ message: error.message })
     }
 }
 
-
-//controller for uploading a resume to the database
-//POST: /api/ai/upload-resume
+// Controller for uploading/parsing a resume to the database using AI
+// POST: /api/generation/upload-resume
 export const uploadResume = async (req, res) => {
     try {
-        
         const { resumeText, title } = req.body
         const userId = req.userId
 
@@ -88,42 +90,42 @@ export const uploadResume = async (req, res) => {
         Provide data in the following JSON format with no additional text before or after:
         
         {
-            "professional_summary": "string - extracted professional summary",
-            "skills": ["string - skill 1", "string - skill 2"],
-            "personal_info": {
-                "image": "",
-                "full_name": "string - extracted full name",
-                "profession": "string - extracted profession",
-                "email": "string - extracted email",
-                "phone": "string - extracted phone",
-                "location": "string - extracted location",
-                "linkedin": "string - extracted linkedin url",
-                "website": "string - extracted portfolio/website url"
+            professional_summary: {type: String, default: ''},
+            skills: [{type: String}],
+            personal_info: {
+                image: {type: String, default: ''},
+                full_name: {type: String, default: ''},
+                profession: {type: String, default: ''},
+                email: {type: String, default: ''},
+                phone: {type: String, default: ''},
+                location: {type: String, default: ''},
+                linkedin: {type: String, default: ''},
+                website: {type: String, default: ''},
             }, 
-            "experience": [
+            experience: [
                 {
-                    "company": "string - company name",
-                    "position": "string - job position",
-                    "start_date": "string - start date",
-                    "end_date": "string - end date or 'Present'",
-                    "description": "string - description of responsibilities",
-                    "is_current": false
+                    company: {type: String},
+                    position: {type: String},
+                    start_date: {type: String},
+                    end_date: {type: String},
+                    description: {type: String},
+                    is_current: {type: Boolean},
                 }
             ],
-            "project": [
+            project: [
                 {
-                    "name": "string - project name",
-                    "type": "string - project type/technologies used",
-                    "description": "string - project description"
+                    name: {type: String},
+                    type: {type: String},
+                    description: {type: String},
                 }
             ],
-            "education": [
+            education: [
                 {
-                    "institution": "string - school or university name",
-                    "degree": "string - degree/qualification",
-                    "field": "string - field of study",
-                    "graduation_date": "string - graduation date",
-                    "gpa": "string - GPA or empty string"
+                    institution: {type: String},
+                    degree: {type: String},
+                    field: {type: String},
+                    graduation_date: {type: String},
+                    gpa: {type: String},
                 }
             ]
         }`
@@ -146,7 +148,10 @@ export const uploadResume = async (req, res) => {
         const parsedData = JSON.parse(extractedData)
         const newResume = await Resume.create({userId, title, ...parsedData})
 
-         res.json({ resumeId: newResume._id })
+        // Success: Increment the weekly parser count for the user
+        const updatedLimits = await incrementQuota(userId, 'parser')
+
+        res.json({ resumeId: newResume._id, limits: updatedLimits })
 
     } catch (error) {
         return res.status(400).json({ message: error.message })
