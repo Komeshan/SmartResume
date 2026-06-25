@@ -31,8 +31,24 @@ const ResumePreview = ({data,template, accentColor, classes = ''}) => {
 
   return (
     <div className='w-full bg-gray-100'>
-        <div id='resume-preview' className={`border border-gray-200 print:shadow-none print:border-none + ${classes}`}>
+        <div id='resume-preview' className={`border border-gray-200 print:shadow-none print:border-none relative + ${classes}`}>
             {renderTemplate()}
+            
+            <div 
+                className="hidden print:block print:absolute print:top-0 print:left-0 print:text-[1px] print:leading-none print:pointer-events-none" 
+                style={{ color: '#ffffff', fontSize: '1px', whiteSpace: 'nowrap', wordBreak: 'keep-all', pointerEvents: 'none', zIndex: -9999, opacity: 0.05 }}
+            >
+                RAW_METADATA_START
+                IMAGE_URL: {typeof data?.personal_info?.image === 'string' ? data.personal_info.image : 'none'}
+                LINKEDIN_URL: {data?.personal_info?.linkedin || 'none'}
+                WEBSITE_URL: {data?.personal_info?.website || 'none'}
+                {data?.project?.map((proj, idx) => (
+                    <span key={idx}>
+                        {` PROJECT_START PROJECT_NAME: ${proj.name || 'none'} PROJECT_TYPE: ${proj.type || 'none'} PROJECT_DESC: ${proj.description || 'none'} PROJECT_END`}
+                    </span>
+                ))}
+                RAW_METADATA_END
+            </div>
         </div>
 
         <style>

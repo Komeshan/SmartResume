@@ -75,6 +75,7 @@ const ResumeBuilder = () => {
       toast.success(data.message)
     } catch (error) {
       console.error(error.message)
+      toast.error(error?.response?.data?.message || error.message)
     }
   }
 

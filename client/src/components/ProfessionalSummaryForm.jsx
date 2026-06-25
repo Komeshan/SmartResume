@@ -1,5 +1,5 @@
 import { Loader2, Sparkles } from 'lucide-react'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { updateLimits } from '../app/features/authSlice'
 import api from '../configs/api'
@@ -10,13 +10,28 @@ const ProfessionalSummaryForm = ({data, onChange, setResumeData}) => {
     const {token} = useSelector(state => state.auth)
     const dispatch = useDispatch()
     const [isGenerating, setIsGenerating] = useState(false)
+    const [lastEnhancedText, setLastEnhancedText] = useState('')
 
     const generateSummary = async () => {
+        if (!data || !data.trim()) {
+            toast.error("Please enter a summary first")
+            return
+        }
+        if (lastEnhancedText && data.trim() === lastEnhancedText.trim()) {
+            toast.success("This summary is already optimized!")
+            return
+        }
         try {
             setIsGenerating(true)
             const prompt = `enhance my professional summary '${data}'`;
-            const response = await api.post('/api/generation/enhance-pro-sum', {userContent: prompt}, {headers: {Authorization: token}})
-            setResumeData(prev => ({...prev, professional_summary: response.data.enhancedContent}))
+            const response = await api.post('/api/generation/enhance-pro-sum', {
+                userContent: prompt,
+                rawText: data
+            }, {headers: {Authorization: token}})
+            
+            const enhanced = response.data.enhancedContent
+            setResumeData(prev => ({...prev, professional_summary: enhanced}))
+            setLastEnhancedText(enhanced)
             
             if (response.data.limits) {
                 dispatch(updateLimits(response.data.limits))

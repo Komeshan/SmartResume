@@ -1,5 +1,5 @@
-import { Briefcase, Loader2, Plus, Space, Sparkles, Trash2 } from 'lucide-react'
-import React, { useState } from 'react'
+import { Briefcase, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { updateLimits } from '../app/features/authSlice'
 import api from '../configs/api'
@@ -10,6 +10,7 @@ const ExperienceForm = ({data, onChange}) => {
     const {token} = useSelector(state => state.auth)
     const dispatch = useDispatch()
     const [generatingIndex, setGeneratingIndex] = useState(-1)
+    const [lastEnhancedTexts, setLastEnhancedTexts] = useState({})
 
     const addExperience = () => {
         const newExperience = {
@@ -35,13 +36,31 @@ const ExperienceForm = ({data, onChange}) => {
     }
 
     const generateDescription = async (index) => {
-        setGeneratingIndex(index)
         const experience = data[index]
+        const currentDesc = experience.description || ''
+        const lastEnhanced = lastEnhancedTexts[index] || ''
+
+        if (!currentDesc.trim()) {
+            toast.error("Please enter a job description first")
+            return
+        }
+        if (lastEnhanced && currentDesc.trim() === lastEnhanced.trim()) {
+            toast.success("This job description is already optimized!")
+            return
+        }
+
+        setGeneratingIndex(index)
         const prompt = `enhance this job description ${experience.description} for the position of ${experience.position} at ${experience.company}`
         
         try {
-            const response = await api.post('/api/generation/enhance-job-desc', {userContent: prompt}, {headers: {Authorization: token}})
-            updateExperience(index, 'description', response.data.enhancedContent)
+            const response = await api.post('/api/generation/enhance-job-desc', {
+                userContent: prompt,
+                rawText: experience.description
+            }, {headers: {Authorization: token}})
+            
+            const enhanced = response.data.enhancedContent
+            updateExperience(index, 'description', enhanced)
+            setLastEnhancedTexts(prev => ({...prev, [index]: enhanced}))
             
             if (response.data.limits) {
                 dispatch(updateLimits(response.data.limits))

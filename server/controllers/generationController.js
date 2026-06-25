@@ -1,4 +1,6 @@
 import Resume from "../models/Resume.js"
+import User from "../models/User.js"
+import AiCache from "../models/AiCache.js"
 import ai from "../configs/ai.js"
 import { incrementQuota } from "../middlewares/quotaMiddleware.js"
 
@@ -6,10 +8,40 @@ import { incrementQuota } from "../middlewares/quotaMiddleware.js"
 // POST: /api/generation/enhance-professional-summary
 export const enhanceProfessionalSummary = async (req, res) => {
     try {
-        const { userContent } = req.body
+        const { userContent, rawText: clientRawText } = req.body
  
         if (!userContent) {
             return res.status(400).json({ message: 'User content is required' })
+        }
+
+        // 1. Check AI Cache
+        let rawText = clientRawText;
+        if (!rawText) {
+            const prefix = "enhance my professional summary '";
+            const suffix = "'";
+            if (userContent.startsWith(prefix) && userContent.endsWith(suffix)) {
+                rawText = userContent.substring(prefix.length, userContent.length - suffix.length);
+            } else {
+                const summaryMatch = userContent.match(/enhance my professional summary '(.*)'/s);
+                rawText = summaryMatch ? summaryMatch[1] : userContent;
+            }
+        }
+
+        const trimmedRawText = rawText.trim();
+        const trimmedUserContent = userContent.trim();
+
+        const cached = await AiCache.findOne({ 
+            userId: req.userId, 
+            $or: [
+                { inputText: trimmedUserContent },
+                { outputText: trimmedRawText }
+            ],
+            type: 'summary' 
+        })
+        if (cached) {
+            const user = await User.findById(req.userId)
+            const responseText = cached.outputText === trimmedRawText ? trimmedRawText : cached.outputText;
+            return res.status(200).json({ enhancedContent: responseText, limits: user?.aiUsage })
         }
 
         const response = await ai.chat.completions.create({
@@ -25,8 +57,16 @@ export const enhanceProfessionalSummary = async (req, res) => {
             ]
         })
 
-        const enhancedContent = response.choices[0].message.content
+        const enhancedContent = response.choices[0].message.content.trim()
         
+        // 2. Save result to cache
+        await AiCache.create({
+            userId: req.userId,
+            inputText: trimmedUserContent,
+            outputText: enhancedContent,
+            type: 'summary'
+        })
+
         // Success: Increment the summary count for the user
         const updatedLimits = await incrementQuota(req.userId, 'summary')
 
@@ -41,10 +81,34 @@ export const enhanceProfessionalSummary = async (req, res) => {
 // POST: /api/generation/enhance-job-description
 export const enhanceJobDescription = async (req, res) => {
     try {
-        const { userContent } = req.body
+        const { userContent, rawText: clientRawText } = req.body
 
         if (!userContent) {
             return res.status(400).json({ message: 'User content is required' })
+        }
+
+        // 1. Check AI Cache
+        let rawText = clientRawText;
+        if (!rawText) {
+            const match = userContent.match(/enhance this job description (.*) for the position of .* at .*/s);
+            rawText = match ? match[1] : userContent;
+        }
+
+        const trimmedRawText = rawText.trim();
+        const trimmedUserContent = userContent.trim();
+
+        const cached = await AiCache.findOne({ 
+            userId: req.userId, 
+            $or: [
+                { inputText: trimmedUserContent },
+                { outputText: trimmedRawText }
+            ],
+            type: 'experience' 
+        })
+        if (cached) {
+            const user = await User.findById(req.userId)
+            const responseText = cached.outputText === trimmedRawText ? trimmedRawText : cached.outputText;
+            return res.status(200).json({ enhancedContent: responseText, limits: user?.aiUsage })
         }
 
         const response = await ai.chat.completions.create({
@@ -60,7 +124,15 @@ export const enhanceJobDescription = async (req, res) => {
             ]
         })
 
-        const enhancedContent = response.choices[0].message.content
+        const enhancedContent = response.choices[0].message.content.trim()
+
+        // 2. Save result to cache
+        await AiCache.create({
+            userId: req.userId,
+            inputText: trimmedUserContent,
+            outputText: enhancedContent,
+            type: 'experience'
+        })
 
         // Success: Increment the summary count for the user (since it is a daily action)
         const updatedLimits = await incrementQuota(req.userId, 'summary')
@@ -83,7 +155,20 @@ export const uploadResume = async (req, res) => {
             return res.status(400).json({ message: 'Resume text is required' })
         }
 
-        const systemPrompt = 'you are an expert AI Agent to extract data from resume'
+        const systemPrompt = `You are an expert AI Agent specializing in extracting structured data from resume text.
+Your task is to accurately extract professional summary, skills, personal info, experience, projects, and education.
+
+CRITICAL INSTRUCTION:
+- Check the resume text for a block starting with 'RAW_METADATA_START' and ending with 'RAW_METADATA_END'.
+- If you find this metadata block, you MUST extract the values for:
+  * 'IMAGE_URL: <url>' -> populate 'personal_info.image'. If value is 'none', use an empty string.
+  * 'LINKEDIN_URL: <url>' -> populate 'personal_info.linkedin'. If value is 'none', use an empty string.
+  * 'WEBSITE_URL: <url>' -> populate 'personal_info.website'. If value is 'none', use an empty string.
+  * 'PROJECT_START PROJECT_NAME: <name> PROJECT_TYPE: <type> PROJECT_DESC: <desc> PROJECT_END' blocks -> populate the 'project' array. For each block, create a project object. If value is 'none', use an empty string.
+- These metadata values are the absolute ground truth. Prioritize them for these fields over any other extracted text to ensure 100% accuracy.
+- If the metadata block is not present or does not contain these keys, extract them standardly from the resume body text.
+- Ensure the 'project' array is populated exactly with the distinct projects listed in the metadata block (do not split a single project into multiple items, and do not combine different projects).
+- For all other fields (full_name, email, phone, location, profession, experience, education, skills, professional_summary), extract them standardly from the text of the resume.`
 
         const userPrompt = `extract data from the resume: ${resumeText}
         

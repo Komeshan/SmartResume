@@ -1,5 +1,5 @@
-import React from 'react'
 import { BriefcaseBusiness, Globe, Mail, MapPin, Phone, User, Handshake  } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 const PersonalInfoForm = ({data, onChange, removeBackground, setRemoveBackground}) => {
 
@@ -59,7 +59,17 @@ const PersonalInfoForm = ({data, onChange, removeBackground, setRemoveBackground
                         <span className="text-[8px] font-bold mt-1">Upload</span>
                     </div>
                 )}
-                <input type="file" accept='image/jpeg, image/png' className='hidden' onChange={(e) => handleChange('image', e.target.files[0])}/>
+                <input type="file" accept='image/jpeg, image/png' className='hidden' onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                            toast.error("File size limit exceeded. Maximum upload limit is 5MB.");
+                            e.target.value = "";
+                            return;
+                        }
+                        handleChange('image', file);
+                    }
+                }}/>
             </label>
             {data.image && data.image !== 'undefined' && data.image !== 'null' && (
                 <div className='flex flex-col gap-1 pl-2 text-xs'>
